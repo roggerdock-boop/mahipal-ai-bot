@@ -3,186 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#121212">
-    <title>Empire AI Pro</title>
+    <title>Empire AI - Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
-            --bg-color: #0f0f10;
-            --card-bg: #1a1a1d;
-            --text-main: #e0e0e0;
-            --bot-bubble: #252529;
-            --user-bubble: #3a7bd5;
+        :root { --primary: #00d2ff; --bg: #0f0f10; --card: #1a1a1d; }
+        body { margin: 0; padding: 0; background: var(--bg); font-family: 'Inter', sans-serif; color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .header { padding: 15px; background: #161618; border-bottom: 1px solid #333; text-align: center; font-weight: bold; color: var(--primary); }
+        #chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 18px; line-height: 1.5; font-size: 0.95rem; }
+        .user { align-self: flex-end; background: #3a7bd5; color: white; border-bottom-right-radius: 2px; }
+        .bot { align-self: flex-start; background: var(--card); border: 1px solid #333; border-bottom-left-radius: 2px; }
+
+        /* Login Overlay */
+        #login-overlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); z-index: 1000; flex-direction: column; justify-content: center; align-items: center; 
         }
+        .login-card { background: #1a1a1d; padding: 30px; border-radius: 20px; text-align: center; border: 1px solid #333; max-width: 300px; }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
-
-        body { background: var(--bg-color); color: var(--text-main); height: 100vh; display: flex; justify-content: center; overflow: hidden; }
-
-        .app-shell { width: 100%; max-width: 600px; display: flex; flex-direction: column; height: 100vh; background: var(--bg-color); position: relative; }
-
-        /* Header UI */
-        .app-header {
-            padding: 18px 20px;
-            background: rgba(22, 22, 24, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #333;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 10;
-        }
-
-        .bot-info { display: flex; align-items: center; gap: 12px; }
-        .bot-logo { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-gradient); display: flex; align-items: center; justify-content: center; font-weight: bold; color: black; }
-        .status-dot { width: 8px; height: 8px; background: #4cd137; border-radius: 50%; box-shadow: 0 0 10px #4cd137; }
-
-        /* Chat Area */
-        #chat-box {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            scrollbar-width: none; /* Firefox */
-        }
-        #chat-box::-webkit-scrollbar { display: none; } /* Chrome/Safari */
-
-        .message {
-            max-width: 85%;
-            padding: 14px 18px;
-            border-radius: 20px;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            position: relative;
-            animation: slideUp 0.3s ease-out;
-        }
-
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .user-msg {
-            align-self: flex-end;
-            background: var(--user-bubble);
-            color: white;
-            border-bottom-right-radius: 4px;
-            box-shadow: 0 4px 15px rgba(58, 123, 213, 0.3);
-        }
-
-        .bot-msg {
-            align-self: flex-start;
-            background: var(--bot-bubble);
-            color: #d1d1d1;
-            border-bottom-left-radius: 4px;
-            border: 1px solid #333;
-        }
-
-        /* Input Bar UI */
-        .input-container {
-            padding: 15px 20px 30px 20px;
-            background: #161618;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-top: 1px solid #333;
-        }
-
-        .input-wrapper {
-            flex: 1;
-            background: #252529;
-            border-radius: 30px;
-            padding: 4px 15px;
-            display: flex;
-            align-items: center;
-            border: 1px solid #3f3f42;
-        }
-
-        input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            padding: 10px;
-            color: white;
-            outline: none;
-            font-size: 1rem;
-        }
-
-        .send-btn {
-            background: var(--primary-gradient);
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.2s;
-            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
-        }
-
-        .send-btn:active { transform: scale(0.9); }
-
-        /* Markdown Formatting Fixes */
-        .bot-msg h1, .bot-msg h2 { font-size: 1.1rem; margin-bottom: 8px; color: #00d2ff; }
-        .bot-msg ul { margin-left: 20px; margin-top: 5px; }
-        .gen-img { width: 100%; border-radius: 15px; margin-top: 10px; border: 1px solid #444; }
+        .input-area { padding: 15px; background: #161618; display: flex; gap: 10px; border-top: 1px solid #333; }
+        input { flex: 1; background: #252529; border: none; padding: 12px 18px; border-radius: 25px; color: white; outline: none; }
+        button { background: var(--primary); border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="app-shell">
-    <div class="app-header">
-        <div class="bot-info">
-            <div class="bot-logo">E</div>
-            <div>
-                <h2 style="font-size: 1rem;">Empire AI Pro</h2>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <div class="status-dot"></div>
-                    <span style="font-size: 0.7rem; color: #888;">Active Now</span>
-                </div>
-            </div>
-        </div>
-        <div style="font-size: 0.8rem; background: #333; padding: 4px 10px; border-radius: 12px; color: #00d2ff;">V2.5</div>
+<div id="login-overlay">
+    <div class="login-card">
+        <h2 style="color: var(--primary);">Limit Reached!</h2>
+        <p style="color: #888; font-size: 0.9rem; margin-bottom: 20px;">Bhai, guest limit khatam ho gayi hai. Aage ki chat ke liye login karein.</p>
+        <button onclick="mockLogin()" style="width:100%; padding:12px; border-radius:10px; border:none; background:white; font-weight:bold; cursor:pointer;">Google se Login karein</button>
+        <p style="font-size: 0.7rem; margin-top:10px; color:#555;">(Google Login setup kal hoga, abhi test ke liye click karein)</p>
     </div>
+</div>
 
-    <div id="chat-box">
-        <div class="message bot-msg">Ram-Ram Mahipal bhai! Aaj kya help karun aapki?</div>
-    </div>
+<div class="header">EMPIRE AI PRO</div>
+<div id="chat-box">
+    <div class="msg bot">Ram-Ram bhai! Aaj main aapki kya madad kar sakta hoon?</div>
+</div>
 
-    <div class="input-container">
-        <div class="input-wrapper">
-            <input type="text" id="userInput" placeholder="Kuch pucho ya photo banao..." autocomplete="off">
-        </div>
-        <button class="send-btn" onclick="send()">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="black"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
-        </button>
-    </div>
+<div class="input-area">
+    <input type="text" id="userInput" placeholder="Message..." autocomplete="off">
+    <button onclick="send()">🚀</button>
 </div>
 
 <script>
     const box = document.getElementById('chat-box');
     const input = document.getElementById('userInput');
+    const overlay = document.getElementById('login-overlay');
+
+    // Simple Session & Access Control
+    let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    let msgCount = parseInt(localStorage.getItem('msgCount')) || 0;
+
+    function mockLogin() {
+        localStorage.setItem('isLoggedIn', 'true');
+        isLoggedIn = true;
+        overlay.style.display = 'none';
+        alert("Bhai, aap login ho chuke ho! Ab unlimited chat karo.");
+    }
 
     async function send() {
-        const text = input.value.trim();
-        if(!text) return;
-
-        box.innerHTML += `<div class="message user-msg">${text}</div>`;
-        input.value = '';
-        box.scrollTop = box.scrollHeight;
-
-        // Image Handling
-        if(["photo", "image", "pic", "banao"].some(k => text.toLowerCase().includes(k))) {
-            const imgUrl = `https://pollinations.ai/p/${encodeURIComponent(text)}?width=1024&height=1024&model=flux`;
-            box.innerHTML += `<div class="message bot-msg">Bhai, aapki request par ye image bani hai:<br><img src="${imgUrl}" class="gen-img"></div>`;
-            box.scrollTop = box.scrollHeight;
+        // Access Check
+        if (!isLoggedIn && msgCount >= 5) {
+            overlay.style.display = 'flex';
             return;
         }
 
-        // Chat Handling
+        const text = input.value.trim();
+        if(!text) return;
+
+        box.innerHTML += `<div class="msg user">${text}</div>`;
+        input.value = '';
+        box.scrollTop = box.scrollHeight;
+
+        // Increment count only for guests
+        if (!isLoggedIn) {
+            msgCount++;
+            localStorage.setItem('msgCount', msgCount);
+        }
+
         try {
             const res = await fetch('/chat', {
                 method: 'POST',
@@ -190,12 +91,13 @@
                 body: JSON.stringify({ message: text })
             });
             const data = await res.json();
-            box.innerHTML += `<div class="message bot-msg">${marked.parse(data.reply)}</div>`;
+            box.innerHTML += `<div class="msg bot">${marked.parse(data.reply)}</div>`;
             box.scrollTop = box.scrollHeight;
         } catch (e) {
-            box.innerHTML += `<div class="message bot-msg">Bhai, kuch network issue lag raha hai.</div>`;
+            box.innerHTML += `<div class="msg bot">Error: Net check karo bhai!</div>`;
         }
     }
+
     input.addEventListener("keypress", (e) => { if(e.key === "Enter") send(); });
 </script>
 </body>

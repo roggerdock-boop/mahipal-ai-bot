@@ -9,48 +9,45 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// SMART MEMORY & ALL-ROUNDER PERSONALITY
+// --- ADVANCED NLP SYSTEM PROMPT ---
 let chatHistory = [
     { 
         role: "system", 
-        content: `Tumhara naam "Empire AI" hai. Tum ek smart aur all-rounder AI assistant ho jise Mahipal ne banaya hai.
+        content: `Tumhara naam "Empire AI" hai, jise Mahipal ne banaya hai.
         
-        RULES:
-        1. User ko hamesha "Bhai" ya "Dost" keh kar baat karo.
-        2. "Mahipal" tumhare Boss/Creator hain. Sirf unhe hi 'Mahipal Bhai' ya 'Boss' bolo. Dusron ko nahi.
-        3. Tum har topic (Science, History, Tech, Fun) par baat kar sakte ho.
-        4. Markdown (Headings, Bold, Lists) ka use karo taaki jawab sundar dikhe.` 
+        ADVANCED SKILLS:
+        1. MULTI-LINGUAL: User jis bhasha mein baat kare (Hindi, English, Rajasthani, etc.), tum usi mein jawab do.
+        2. SARCASM DETECTION: Agar user taana maare ya sarcasm use kare (e.g., 'Wah! Tu toh bada hoshiyaar hai'), toh use samjho aur ek witty/mazedaar jawab do.
+        3. IDIOMS & COLLOQUIALISMS: "Aasman se gira khajoor mein atka" ya "Makkhan lagana" jaise muhavaron ko samjho aur unka sahi matlab nikaalo.
+        
+        PERSONALITY:
+        - Tum robotic nahi ho. Tumhari baaton mein thoda 'Desi' touch aur 'Witty' (chatur) andaaz hona chahiye.
+        - User ko "Bhai" ya "Dost" bolo. Mahipal ko "Boss" ya "Creator" bolo.
+        - Markdown use karo (Headings, Bold) taaki jawab premium lage.` 
     }
 ];
 
 app.post('/chat', async (req, res) => {
     try {
         const userMsg = req.body.message;
-        
-        // Chat History mein user ka message dalo
         chatHistory.push({ role: "user", content: userMsg });
 
         const chatCompletion = await groq.chat.completions.create({
             messages: chatHistory,
             model: "llama-3.3-70b-versatile",
-            temperature: 0.7, // Thoda creative jawab ke liye
+            temperature: 0.8, // Thoda high rakha hai taaki sarcasm aur idioms ache se nikal kar aayein
         });
 
         const reply = chatCompletion.choices[0].message.content;
-        
-        // Bot ka jawab history mein dalo
         chatHistory.push({ role: "assistant", content: reply });
 
-        // Memory manage karne ke liye (pichli 15 baatein yaad rakhega)
-        if (chatHistory.length > 15) chatHistory.splice(1, 2);
+        if (chatHistory.length > 20) chatHistory.splice(1, 2);
 
         res.json({ reply: reply });
-
     } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({ reply: "Bhai, AI thoda thak gaya hai, ek baar refresh karke pucho!" });
+        res.status(500).json({ reply: "Bhai, dimag garam ho gaya hai AI ka. Refresh karo!" });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 All-Rounder Empire AI Live!`));
+app.listen(PORT, () => console.log(`🚀 Empire AI NLP Pro Live!`));
