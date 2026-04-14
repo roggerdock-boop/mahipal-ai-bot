@@ -1,53 +1,72 @@
 const express = require('express');
-const path = require('path');
+const mongoose = require('mongoose');
 const Groq = require("groq-sdk");
 require('dotenv').config();
 
 const app = express();
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// --- ADVANCED NLP SYSTEM PROMPT ---
-let chatHistory = [
-    { 
-        role: "system", 
-        content: `Tumhara naam "Empire AI" hai, jise Mahipal ne banaya hai.
-        
-        ADVANCED SKILLS:
-        1. MULTI-LINGUAL: User jis bhasha mein baat kare (Hindi, English, Rajasthani, etc.), tum usi mein jawab do.
-        2. SARCASM DETECTION: Agar user taana maare ya sarcasm use kare (e.g., 'Wah! Tu toh bada hoshiyaar hai'), toh use samjho aur ek witty/mazedaar jawab do.
-        3. IDIOMS & COLLOQUIALISMS: "Aasman se gira khajoor mein atka" ya "Makkhan lagana" jaise muhavaron ko samjho aur unka sahi matlab nikaalo.
-        
-        PERSONALITY:
-        - Tum robotic nahi ho. Tumhari baaton mein thoda 'Desi' touch aur 'Witty' (chatur) andaaz hona chahiye.
-        - User ko "Bhai" ya "Dost" bolo. Mahipal ko "Boss" ya "Creator" bolo.
-        - Markdown use karo (Headings, Bold) taaki jawab premium lage.` 
-    }
-];
+// --- DATABASE CONNECTION LOGIC ---
+console.log("Attempting to connect to Database...");
+
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("✅ ✅ ✅ DATABASE CONNECTED SUCCESSFULLY!");
+  })
+  .catch(err => {
+    console.log("❌ ❌ ❌ DATABASE CONNECTION ERROR:", err.message);
+  });
+
+// User Schema (Memory System)
+const userSchema = new mongoose.Schema({
+    userId: { type: String, default: "default_user" },
+    name: { type: String, default: "Dost" },
+    interests: [String],
+    chatHistory: [{ role: String, content: String }]
+});
+const User = mongoose.model('User', userSchema);
 
 app.post('/chat', async (req, res) => {
     try {
-        const userMsg = req.body.message;
-        chatHistory.push({ role: "user", content: userMsg });
+        const { message } = req.body;
+        const userId = "default_user"; 
 
-        const chatCompletion = await groq.chat.completions.create({
-            messages: chatHistory,
+        // Database se user memory nikalna
+        let userData = await User.findOne({ userId });
+        if (!userData) {
+            userData = new User({ userId });
+        }
+
+        // AI Logic
+        const messages = [
+            { role: "system", content: `Tum Empire AI ho. User ka naam ${userData.name} hai. Use respect do.` },
+            ...userData.chatHistory.slice(-6),
+            { role: "user", content: message }
+        ];
+
+        const completion = await groq.chat.completions.create({
+            messages,
             model: "llama-3.3-70b-versatile",
-            temperature: 0.8, // Thoda high rakha hai taaki sarcasm aur idioms ache se nikal kar aayein
         });
 
-        const reply = chatCompletion.choices[0].message.content;
-        chatHistory.push({ role: "assistant", content: reply });
+        const reply = completion.choices[0].message.content;
 
-        if (chatHistory.length > 20) chatHistory.splice(1, 2);
+        // Memory Save Karna
+        userData.chatHistory.push({ role: "user", content: message });
+        userData.chatHistory.push({ role: "assistant", content: reply });
+        await userData.save();
 
-        res.json({ reply: reply });
+        res.json({ reply });
     } catch (error) {
-        res.status(500).json({ reply: "Bhai, dimag garam ho gaya hai AI ka. Refresh karo!" });
+        console.log("Chat Error:", error.message);
+        res.status(500).json({ reply: "Bhai, error aa gaya!" });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Empire AI NLP Pro Live!`));
+app.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+});
