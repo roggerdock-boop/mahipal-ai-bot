@@ -1,164 +1,136 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mahipal AI - Ultimate Edition</title>
+    <title>Empire AI - Mahipal Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
-        body { background: #eef2f7; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        :root { --primary: #00d2ff; --secondary: #3a7bd5; --bg: #0f0f10; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: var(--bg); color: white; display: flex; justify-content: center; height: 100vh; }
         
-        .chat-container { 
-            width: 100%; max-width: 450px; height: 90vh; 
-            background: white; display: flex; flex-direction: column; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.15); border-radius: 28px; 
-            overflow: hidden; border: 1px solid #d1d9e0; 
-        }
+        .chat-container { width: 100%; max-width: 500px; background: #1a1a1d; display: flex; flex-direction: column; position: relative; }
         
-        .chat-header { 
-            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%); 
-            color: white; padding: 18px 22px; 
-            display: flex; justify-content: space-between; align-items: center; 
-        }
+        /* Header */
+        .header { padding: 20px; background: linear-gradient(to right, var(--primary), var(--secondary)); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .header h2 { font-size: 1.2rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 
-        .mute-btn { 
-            background: rgba(255, 255, 255, 0.15); border: 1.5px solid rgba(255,255,255,0.3); 
-            color: white; padding: 6px 14px; border-radius: 30px; 
-            cursor: pointer; font-size: 0.75rem; font-weight: 600; transition: 0.3s; 
-        }
+        /* Chat Box */
+        #chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .message { max-width: 85%; padding: 12px 16px; border-radius: 15px; line-height: 1.6; font-size: 0.95rem; position: relative; word-wrap: break-word; }
+        
+        /* User vs Bot Bubble */
+        .user-msg { align-self: flex-end; background: var(--secondary); color: white; border-bottom-right-radius: 2px; }
+        .bot-msg { align-self: flex-start; background: #2d2d30; color: #e0e0e0; border-bottom-left-radius: 2px; border: 1px solid #3f3f42; }
 
-        #chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; background: #fcfcfc; }
-        
-        .message { padding: 12px 18px; border-radius: 20px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .user-msg { align-self: flex-end; background: #007bff; color: white; border-bottom-right-radius: 4px; box-shadow: 0 4px 10px rgba(0,123,255,0.2); }
-        .bot-msg { align-self: flex-start; background: #f1f3f5; color: #1a1a1a; border-bottom-left-radius: 4px; white-space: pre-wrap; }
-        
-        .generated-img { width: 100%; border-radius: 15px; margin-top: 12px; border: 3px solid #007bff; display: block; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+        /* Markdown Styles inside Bubbles */
+        .bot-msg h1, .bot-msg h2, .bot-msg h3 { margin-bottom: 8px; color: var(--primary); }
+        .bot-msg ul, .bot-msg ol { margin-left: 20px; margin-bottom: 8px; }
 
-        .input-area { padding: 18px 20px; background: white; border-top: 1px solid #eee; display: flex; align-items: center; gap: 12px; }
-        input { flex: 1; padding: 12px 20px; border: 1px solid #dee2e6; border-radius: 30px; outline: none; font-size: 1rem; transition: 0.2s; }
-        input:focus { border-color: #007bff; box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
-        
-        .send-btn { 
-            background: #007bff; color: white; border: none; width: 45px; height: 45px; 
-            border-radius: 50%; cursor: pointer; display: flex; align-items: center; 
-            justify-content: center; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,123,255,0.3);
-        }
-        .send-btn:hover { transform: scale(1.08); background: #0056b3; }
+        /* Image Styling */
+        .gen-img { width: 100%; border-radius: 10px; margin-top: 10px; border: 2px solid var(--primary); cursor: pointer; transition: 0.3s; }
+        .gen-img:hover { transform: scale(1.02); }
+
+        /* Input Area */
+        .input-area { padding: 20px; background: #252529; display: flex; gap: 10px; align-items: center; }
+        input { flex: 1; padding: 14px 20px; border-radius: 25px; border: none; background: #333338; color: white; outline: none; font-size: 1rem; }
+        .send-btn { background: var(--primary); border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .send-btn:hover { background: var(--secondary); transform: rotate(-10deg); }
+
+        /* Typing Animation */
+        .typing { font-style: italic; font-size: 0.8rem; color: #888; margin-bottom: 10px; display: none; }
     </style>
 </head>
 <body>
 
 <div class="chat-container">
-    <div class="chat-header">
+    <div class="header">
         <div>
-            <h2 style="font-size: 1.15rem; letter-spacing: 0.5px;">Mahipal AI Pro</h2>
-            <span style="font-size: 0.65rem; color: #a5c9ff; font-weight: 500;">Online | Image & Voice Mode</span>
+            <h2>Empire AI</h2>
+            <p style="font-size: 0.7rem; opacity: 0.8;">V2.0 | Advanced Context</p>
         </div>
-        <button id="muteToggle" class="mute-btn" onclick="toggleMute()">🔊 UNMUTED</button>
-    </div>
-    
-    <div id="chat-box">
-        <div class="message bot-msg">Ram-Ram Mahipal bhai! Aaj kya help karun aapki?</div>
+        <button id="muteBtn" onclick="toggleMute()" style="background:none; border:none; color:white; cursor:pointer; font-size:1.2rem;">🔊</button>
     </div>
 
+    <div id="chat-box"></div>
+    <div id="typing" class="typing" style="margin-left:20px;">Empire AI Type kar raha hai...</div>
+
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Message or 'photo of...'" autocomplete="off">
+        <input type="text" id="userInput" placeholder="Kuch bhi pucho ya 'photo banao'..." autocomplete="off">
         <button class="send-btn" onclick="send()">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
         </button>
     </div>
 </div>
 
 <script>
-    const input = document.getElementById('userInput');
     const box = document.getElementById('chat-box');
-    const muteBtn = document.getElementById('muteToggle');
+    const input = document.getElementById('userInput');
+    const typing = document.getElementById('typing');
     let isMuted = false;
 
     function toggleMute() {
         isMuted = !isMuted;
-        muteBtn.innerText = isMuted ? "🔈 MUTED" : "🔊 UNMUTED";
-        muteBtn.style.background = isMuted ? "#d63031" : "rgba(255,255,255,0.15)";
-        if (isMuted) window.speechSynthesis.cancel();
+        document.getElementById('muteBtn').innerText = isMuted ? "🔈" : "🔊";
     }
 
     function speak(text) {
         if (isMuted) return;
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        const voices = window.speechSynthesis.getVoices();
-        
-        // Hindi Male voice find karna
-        const maleVoice = voices.find(v => v.lang.includes('hi') && (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('google'))) 
-                          || voices.find(v => v.lang.includes('hi'));
-
-        if (maleVoice) utterance.voice = maleVoice;
-        utterance.lang = 'hi-IN';
-        utterance.pitch = 0.8; // Bhaari mardana awaz
-        utterance.rate = 1.0;
-        window.speechSynthesis.speak(utterance);
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'hi-IN';
+        msg.pitch = 0.9;
+        window.speechSynthesis.speak(msg);
     }
 
     async function send() {
-        const msg = input.value.trim();
-        if (!msg) return;
+        const text = input.value.trim();
+        if (!text) return;
 
-        box.innerHTML += `<div class="message user-msg">${msg}</div>`;
+        // User Message
+        box.innerHTML += `<div class="message user-msg">${text}</div>`;
         input.value = '';
         box.scrollTop = box.scrollHeight;
 
-        // --- IMAGE LOGIC ---
-        const imageKeywords = ["photo", "image", "pic", "banao", "dikhao", "generate"];
-        if (imageKeywords.some(k => msg.toLowerCase().includes(k))) {
-            const loadingId = "img-" + Date.now();
-            box.innerHTML += `<div class="message bot-msg" id="${loadingId}">Theek hai bhai, aapke liye image taiyar kar raha hoon...</div>`;
-            box.scrollTop = box.scrollHeight;
-            speak("Aapki photo taiyar ho rahi hai bhai, ek second ruko.");
-
-            const imgUrl = `https://pollinations.ai/p/${encodeURIComponent(msg)}?width=1024&height=1024&seed=${Math.floor(Math.random()*9999)}&model=flux`;
+        // Check for Image Request
+        const imgKeywords = ["photo", "image", "pic", "banao", "dikhao", "generate"];
+        if (imgKeywords.some(k => text.toLowerCase().includes(k))) {
+            const imgId = "img-" + Date.now();
+            box.innerHTML += `<div class="message bot-msg" id="${imgId}">Theek hai bhai, aapke liye image taiyar kar raha hoon...</div>`;
+            const imgUrl = `https://pollinations.ai/p/${encodeURIComponent(text)}?width=1024&height=1024&model=flux`;
             
-            const finalImg = new Image();
-            finalImg.src = imgUrl;
-            finalImg.className = "generated-img";
-            
-            finalImg.onload = () => {
-                const loader = document.getElementById(loadingId);
-                if(loader) {
-                    loader.innerHTML = `Bhai, dekho kaisi bani hai:<br>`;
-                    loader.appendChild(finalImg);
-                    box.scrollTop = box.scrollHeight;
-                    speak("Bhai, photo taiyar hai. Dekhiye kaisa kaam kiya hai maine.");
-                }
-            };
+            setTimeout(() => {
+                document.getElementById(imgId).innerHTML = `Bhai, dekho kaisi bani hai:<br><img src="${imgUrl}" class="gen-img" onclick="window.open(this.src)">`;
+                box.scrollTop = box.scrollHeight;
+                speak("Bhai, aapki photo taiyar hai.");
+            }, 2000);
             return;
         }
 
-        // --- CHAT LOGIC ---
-        const loadingId = "load-" + Date.now();
-        box.innerHTML += `<div class="message bot-msg" id="${loadingId}">...</div>`;
-        box.scrollTop = box.scrollHeight;
-
+        // Chat Request
+        typing.style.display = 'block';
         try {
             const res = await fetch('/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: msg })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ message: text })
             });
             const data = await res.json();
-            document.getElementById(loadingId).remove();
-            box.innerHTML += `<div class="message bot-msg">${data.reply}</div>`;
+            typing.style.display = 'none';
+
+            // Use Marked.js to render Markdown
+            const formattedReply = marked.parse(data.reply);
+            box.innerHTML += `<div class="message bot-msg">${formattedReply}</div>`;
             box.scrollTop = box.scrollHeight;
-            speak(data.reply);
-        } catch (e) { 
-            document.getElementById(loadingId).innerText = "Bhai net check kar, error aa raha hai!";
+            speak(data.reply.replace(/[#*`]/g, '')); // Clean text for voice
+        } catch (e) {
+            typing.style.display = 'none';
+            box.innerHTML += `<div class="message bot-msg">Bhai, server down lag raha hai!</div>`;
         }
     }
 
     input.addEventListener("keypress", (e) => { if(e.key === "Enter") send(); });
-    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
 </script>
 </body>
 </html>
